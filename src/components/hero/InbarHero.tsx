@@ -1,5 +1,6 @@
 import Image from "next/image";
-import type { SideProfile } from "@/lib/types";
+import type { Lang, SideProfile } from "@/lib/types";
+import { dirOf, pick, t } from "@/lib/i18n";
 import { photoUrl } from "@/lib/supabase";
 
 /** Mom's side: colour, movement, paint. */
@@ -19,26 +20,28 @@ export function InbarBackground({ profile }: { profile: SideProfile }) {
   );
 }
 
-export function InbarContent({ profile, share }: { profile: SideProfile; share: number }) {
+export function InbarContent({ profile, share, lang }: { profile: SideProfile; share: number; lang: Lang }) {
+  const d = t(lang);
   const visible = share > 0.18;
   return (
     <div
+      dir={dirOf(lang)}
       className="flex h-full flex-col items-center justify-center px-6 text-center text-[#2b1638]"
       style={{ opacity: visible ? 1 : 0, transition: "opacity 300ms ease" }}
     >
       <p className="font-hand text-[clamp(1.1rem,5cqw,2rem)]" style={{ transform: "rotate(-4deg)" }}>
-        the art of
+        {d.inbarKicker}
       </p>
       <h1
         className="font-display text-[clamp(2.6rem,24cqw,14rem)] font-black italic leading-[0.95] tracking-tight"
       >
         <span className="px-[0.12em] bg-gradient-to-r from-[#ff5d8f] via-[#7b2cbf] to-[#2ec4b6] bg-clip-text text-transparent">
-          {profile.display_name}
+          {pick(lang, profile.display_name, profile.display_name_he)}
         </span>
       </h1>
-      <p className="mt-4 max-w-sm text-[clamp(.95rem,3.4cqw,1.25rem)] font-medium">{profile.tagline}</p>
+      <p className="mt-4 max-w-sm text-[clamp(.95rem,3.4cqw,1.25rem)] font-medium">{pick(lang, profile.tagline, profile.tagline_he)}</p>
       <p className="mt-8 font-hand text-[clamp(1rem,3cqw,1.25rem)]" style={{ opacity: share > 0.55 && share < 0.98 ? 0.85 : 0 }}>
-        ← pull me wider, or tap to step inside
+        {d.inbarHint}
       </p>
     </div>
   );

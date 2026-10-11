@@ -1,35 +1,67 @@
 "use client";
 
-import { useRef, useState } from "react";
-import type { Portfolio, Side } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
+import { pick, t } from "@/lib/i18n";
+import type { Lang, Portfolio, Side } from "@/lib/types";
+import { LanguageSwitch } from "./LanguageSwitch";
 import { SplitScreenSlider, type Pane } from "./hero/SplitScreenSlider";
 import { InbarBackground, InbarContent } from "./hero/InbarHero";
 import { EliBackground, EliContent } from "./hero/EliHero";
 import { SideSection } from "./SideSection";
 
 const PANE_TO_SIDE: Record<Pane, Side> = { left: "inbar", right: "eli" };
+const SIDE_TO_PANE: Record<Side, Pane> = { inbar: "left", eli: "right" };
 
-export function HomeExperience({ portfolio }: { portfolio: Portfolio }) {
+export function HomeExperience({ lang, portfolio }: { lang: Lang; portfolio: Portfolio }) {
+  const d = t(lang);
   const [selected, setSelected] = useState<Pane | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const side = selected ? PANE_TO_SIDE[selected] : null;
   const { inbar, eli } = portfolio;
+  const nameOf = (s: Side) => pick(lang, portfolio[s].profile.display_name, portfolio[s].profile.display_name_he);
+
+  // "/he#eli" (e.g. the back link on a piece page) opens that side and jumps to its gallery.
+  useEffect(() => {
+    let frame = 0;
+    const openFromHash = () => {
+      const fromHash = window.location.hash.slice(1);
+      if (fromHash !== "inbar" && fromHash !== "eli") return;
+      frame = requestAnimationFrame(() => {
+        setSelected(SIDE_TO_PANE[fromHash]);
+        requestAnimationFrame(() => sectionRef.current?.scrollIntoView());
+      });
+    };
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("hashchange", openFromHash);
+    };
+  }, []);
+
+  const select = (pane: Pane | null) => {
+    setSelected(pane);
+    // Keep the address shareable and make the back link land on the same side.
+    history.replaceState(null, "", pane ? `#${PANE_TO_SIDE[pane]}` : window.location.pathname);
+  };
 
   return (
     <main>
       <div className="relative">
+        <LanguageSwitch lang={lang} className="absolute end-4 top-4 z-50" />
         <SplitScreenSlider
           selected={selected}
-          onSelect={setSelected}
+          onSelect={select}
+          labels={{ open: d.openPane, slider: d.sliderLabel }}
           left={{
-            label: `${inbar.profile.display_name}'s art`,
+            label: d.inbarPaneLabel(nameOf("inbar")),
             background: <InbarBackground profile={inbar.profile} />,
-            content: (share) => <InbarContent profile={inbar.profile} share={share} />,
+            content: (share) => <InbarContent profile={inbar.profile} share={share} lang={lang} />,
           }}
           right={{
-            label: `${eli.profile.display_name}'s radios`,
+            label: d.eliPaneLabel(nameOf("eli")),
             background: <EliBackground profile={eli.profile} />,
-            content: (share) => <EliContent profile={eli.profile} share={share} />,
+            content: (share) => <EliContent profile={eli.profile} share={share} lang={lang} />,
           }}
         />
 
@@ -41,17 +73,23 @@ export function HomeExperience({ portfolio }: { portfolio: Portfolio }) {
               side === "inbar" ? "bg-[#2b1638] text-white" : "bg-[#ffb347] font-mono uppercase tracking-wider text-[#1f140c]"
             }`}
           >
-            Scroll to explore ↓
+            {d.scrollToExplore}
           </button>
         )}
       </div>
 
       <div ref={sectionRef}>
         {side ? (
-          <SideSection key={side} data={portfolio[side]} otherName={portfolio[side === "inbar" ? "eli" : "inbar"].profile.display_name} onSwitch={() => {
-            setSelected(side === "inbar" ? "right" : "left");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-          }} />
+          <SideSection
+            key={side}
+            lang={lang}
+            data={portfolio[side]}
+            otherName={nameOf(side === "inbar" ? "eli" : "inbar")}
+            onSwitch={() => {
+              select(side === "inbar" ? "right" : "left");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
         ) : null}
       </div>
     </main>

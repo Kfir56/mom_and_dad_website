@@ -1,13 +1,15 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { Category, Item, Side } from "@/lib/types";
-import { ItemImage } from "./ItemImage";
+import { pick, t } from "@/lib/i18n";
+import type { Category, Item, Lang, Side } from "@/lib/types";
+import { coverOf, ItemImage } from "./ItemImage";
 import { ItemDialog } from "./ItemDialog";
 
-type Props = { side: Side; categories: Category[]; items: Item[] };
+type Props = { lang: Lang; side: Side; ownerName: string; categories: Category[]; items: Item[] };
 
-export function Gallery({ side, categories, items }: Props) {
+export function Gallery({ lang, side, ownerName, categories, items }: Props) {
+  const d = t(lang);
   const [filter, setFilter] = useState<string | null>(null);
   const [openItem, setOpenItem] = useState<Item | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -17,23 +19,29 @@ export function Gallery({ side, categories, items }: Props) {
     () => categories.filter((c) => items.some((i) => i.category_id === c.id)),
     [categories, items],
   );
-  const categoryName = (id: string | null) => categories.find((c) => c.id === id)?.name;
+  const categoryName = (id: string | null) => {
+    const c = categories.find((c) => c.id === id);
+    return c ? pick(lang, c.name, c.name_he) : undefined;
+  };
   const shown = filter ? items.filter((i) => i.category_id === filter) : items;
 
   const open = (item: Item) => {
     setOpenItem(item);
-    dialogRef.current?.showModal();
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    // Start at the top: focusing the close button can scroll the pop-up a little.
+    requestAnimationFrame(() => dialog?.scrollTo({ top: 0 }));
   };
 
   if (items.length === 0) {
-    return <p className="py-16 text-center text-[var(--side-muted)]">New pieces are on their way.</p>;
+    return <p className="py-16 text-center text-[var(--side-muted)]">{d.emptyGallery}</p>;
   }
 
   return (
     <>
       {usedCategories.length > 1 && (
-        <div role="toolbar" aria-label="Filter by category" className="mb-8 flex flex-wrap justify-center gap-2">
-          {[{ id: null, name: "All" }, ...usedCategories].map((c) => {
+        <div role="toolbar" aria-label={d.filterLabel} className="mb-8 flex flex-wrap justify-center gap-2">
+          {[{ id: null, name: d.all, name_he: d.all }, ...usedCategories].map((c) => {
             const active = filter === c.id;
             return (
               <button
@@ -47,7 +55,7 @@ export function Gallery({ side, categories, items }: Props) {
                     : "border-[var(--side-border)] text-[var(--side-fg)] hover:border-[var(--side-accent)]"
                 } ${side === "eli" ? "font-mono uppercase tracking-wider" : ""}`}
               >
-                {c.name}
+                {pick(lang, c.name, c.name_he)}
               </button>
             );
           })}
@@ -55,12 +63,16 @@ export function Gallery({ side, categories, items }: Props) {
       )}
 
       <ul className="columns-1 gap-6 sm:columns-2 lg:columns-3">
-        {shown.map((item, idx) => (
+        {shown.map((item, idx) => {
+          const title = pick(lang, item.title, item.title_he);
+          const cover = coverOf(item);
+          const materials = pick(lang, item.materials, item.materials_he);
+          return (
           <li key={item.id} className="mb-6 break-inside-avoid">
             <button
               type="button"
               onClick={() => open(item)}
-              className={`group block w-full overflow-hidden text-left transition duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--side-accent)] ${
+              className={`group block w-full overflow-hidden text-start transition duration-300 hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--side-accent)] ${
                 side === "inbar"
                   ? "rounded-2xl bg-[var(--side-card)] p-3 shadow-[0_10px_30px_-12px_rgba(123,44,191,.35)] hover:rotate-0"
                   : "rounded-md border border-[var(--side-border)] bg-[var(--side-card)] shadow-[0_10px_30px_-10px_rgba(0,0,0,.7)]"
@@ -69,24 +81,26 @@ export function Gallery({ side, categories, items }: Props) {
             >
               <div className={`relative overflow-hidden ${side === "inbar" ? "rounded-xl" : ""} ${idx % 3 === 1 ? "aspect-[3/4]" : "aspect-[4/3]"}`}>
                 <ItemImage
-                  path={item.cover_path}
-                  alt={item.title}
+                  path={cover.path}
+                  kind={cover.kind}
+                  alt={title}
                   side={side}
                   seed={item.id}
                   sizes="(min-width:1024px) 33vw, (min-width:640px) 50vw, 100vw"
                   className="transition duration-500 group-hover:scale-105"
                 />
+                <MediaBadges item={item} />
               </div>
               {side === "inbar" ? (
                 <div className="px-1 pb-1 pt-3">
                   <p className="font-hand text-lg text-[var(--side-accent)]">{categoryName(item.category_id)}</p>
-                  <h3 className="font-display text-xl font-bold italic">{item.title}</h3>
-                  {item.materials && <p className="mt-1 text-sm text-[var(--side-muted)]">{item.materials}</p>}
+                  <h3 className="font-display text-xl font-bold italic">{title}</h3>
+                  {materials && <p className="mt-1 text-sm text-[var(--side-muted)]">{materials}</p>}
                 </div>
               ) : (
                 <div className="p-4">
                   <div className="flex items-baseline justify-between gap-3">
-                    <h3 className="font-retro text-xl text-[var(--side-accent)]">{item.title}</h3>
+                    <h3 className="font-retro text-xl text-[var(--side-accent)]">{title}</h3>
                     {item.year && <span className="rounded bg-[var(--side-accent)] px-2 py-0.5 font-mono text-xs font-bold text-[#1f140c]">{item.year}</span>}
                   </div>
                   <p className="mt-1 font-mono text-xs uppercase tracking-wider text-[var(--side-muted)]">
@@ -96,10 +110,30 @@ export function Gallery({ side, categories, items }: Props) {
               )}
             </button>
           </li>
-        ))}
+          );
+        })}
       </ul>
 
-      <ItemDialog ref={dialogRef} side={side} item={openItem} categoryName={categoryName(openItem?.category_id ?? null)} />
+      <ItemDialog ref={dialogRef} lang={lang} side={side} ownerName={ownerName} item={openItem} categoryName={categoryName(openItem?.category_id ?? null)} />
     </>
+  );
+}
+
+/** Little corner icons for pieces that have more than photos. */
+function MediaBadges({ item }: { item: Item }) {
+  const badges = [
+    item.before_path && item.cover_path ? "⇆" : null,
+    item.video_url || item.item_photos.some((p) => p.kind === "video") ? "▶" : null,
+    item.audio_path ? "♪" : null,
+  ].filter(Boolean);
+  if (!badges.length) return null;
+  return (
+    <span aria-hidden className="absolute end-2 top-2 flex gap-1">
+      {badges.map((b) => (
+        <span key={b} className="flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm text-white backdrop-blur">
+          {b}
+        </span>
+      ))}
+    </span>
   );
 }

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-space-mono);
+  --font-sans: var(--font-geist-sans), var(--font-rubik);
+  --font-mono: var(--font-space-mono), var(--font-rubik);
   --font-display: var(--font-fraunces);
   --font-hand: var(--font-caveat);
   --font-retro: var(--font-righteous);
@@ -16,12 +16,19 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  /* Latin glyphs come from the first font; Hebrew falls through to Rubik. */
+  font-family: var(--font-geist-sans), var(--font-rubik), system-ui, sans-serif;
 }
 
-.font-display { font-family: var(--font-fraunces), Georgia, serif; }
-.font-hand    { font-family: var(--font-caveat), cursive; }
-.font-retro   { font-family: var(--font-righteous), var(--font-geist-sans), sans-serif; }
+.font-display { font-family: var(--font-fraunces), var(--font-suez), Georgia, serif; }
+.font-hand    { font-family: var(--font-caveat), var(--font-amatic), cursive; }
+.font-retro   { font-family: var(--font-righteous), var(--font-rubik), sans-serif; }
+.font-mono    { font-family: var(--font-space-mono), var(--font-rubik), monospace; }
+
+/* Amatic SC runs small; give Hebrew handwriting a little more size. */
+:lang(he) .font-hand { font-size-adjust: 0.55; }
+/* Letter-spacing breaks Hebrew letterforms. */
+:lang(he) .font-mono, :lang(he) [class*="tracking-"] { letter-spacing: 0; }
 
 /* ---------- Inbar: drifting paint blobs ---------- */
 .inbar-blob {
@@ -77,3 +84,6 @@ body {
   .inbar-blob { animation: none; }
   *, *::before, *::after { transition-duration: 1ms !important; scroll-behavior: auto !important; }
 }
+
+/* Hebrew has no italics; keep letters upright. */
+:lang(he) .italic { font-style: normal; }

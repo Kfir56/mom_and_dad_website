@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { photoUrl } from "@/lib/supabase";
-import type { Side } from "@/lib/types";
+import type { MediaKind, Side } from "@/lib/types";
 
 const INBAR_SWATCHES = [
   "from-[#ff5d8f] to-[#ffb627]",
@@ -9,13 +9,14 @@ const INBAR_SWATCHES = [
   "from-[#7b2cbf] to-[#ff5d8f]",
 ];
 
-/** A photo from storage, or a themed placeholder while there is none. */
+/** A photo (or a still from a video) from storage, or a themed placeholder while there is none. */
 export function ItemImage({
   path,
   alt,
   side,
   seed,
   sizes,
+  kind = "image",
   className = "",
 }: {
   path: string | null;
@@ -23,9 +24,14 @@ export function ItemImage({
   side: Side;
   seed: string;
   sizes: string;
+  kind?: MediaKind;
   className?: string;
 }) {
   const src = photoUrl(path);
+  if (src && kind === "video") {
+    // "#t=0.1" makes browsers show the first frame as a thumbnail.
+    return <video src={`${src}#t=0.1`} muted playsInline preload="metadata" aria-label={alt} className={`absolute inset-0 h-full w-full object-cover ${className}`} />;
+  }
   if (src) return <Image src={src} alt={alt} fill sizes={sizes} className={`object-cover ${className}`} />;
 
   if (side === "inbar") {
@@ -47,4 +53,11 @@ export function ItemImage({
       </svg>
     </div>
   );
+}
+
+/** The picture used for an item's card: its cover photo, else its first uploaded video. */
+export function coverOf(item: { cover_path: string | null; item_photos: { path: string; kind: MediaKind }[] }) {
+  if (item.cover_path) return { path: item.cover_path, kind: "image" as const };
+  const video = item.item_photos.find((p) => p.kind === "video");
+  return video ? { path: video.path, kind: "video" as const } : { path: null, kind: "image" as const };
 }
