@@ -6,10 +6,12 @@ import { useEffect } from "react";
 import { useAdminSession } from "@/components/admin/useAdminSession";
 import { AdminDashboard } from "@/components/admin/AdminDashboard";
 import { getBrowserClient } from "@/lib/supabase";
+import { useAdminLang } from "@/components/admin/AdminLang";
 
 export default function AdminPage() {
   const state = useAdminSession();
   const router = useRouter();
+  const { a } = useAdminLang();
 
   useEffect(() => {
     if (state.status === "signed-out") router.replace("/admin/login");
@@ -20,14 +22,14 @@ export default function AdminPage() {
   if (state.status === "not-admin") {
     return (
       <main className="flex min-h-svh flex-col items-center justify-center gap-4 p-6 text-center">
-        <p className="text-lg">This account isn&apos;t set up as an admin yet.</p>
+        <p className="text-lg">{a.notAdmin}</p>
         <button className="underline" onClick={() => getBrowserClient().auth.signOut()}>
-          Sign out
+          {a.signOut}
         </button>
-        <Link href="/" className="underline">Back to the site</Link>
+        <Link href="/" className="underline">{a.backToSite}</Link>
       </main>
     );
   }
 
-  return <main className="flex min-h-svh items-center justify-center text-stone-500">Loading…</main>;
+  return <main className="flex min-h-svh items-center justify-center text-stone-500">{a.loading}</main>;
 }

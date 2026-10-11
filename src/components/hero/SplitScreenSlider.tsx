@@ -25,6 +25,13 @@ type Props = {
   onSelect: (pane: Pane | null) => void;
   /** Dragging past this share opens a pane fully. */
   commitAt?: number;
+  /** Accessible wording, for translations. */
+  labels?: { open: (pane: string) => string; slider: (left: string, right: string) => string };
+};
+
+const DEFAULT_LABELS = {
+  open: (pane: string) => `Open ${pane}`,
+  slider: (a: string, b: string) => `Drag to choose between ${a} and ${b}`,
 };
 
 const CLICK_SLOP_PX = 5;
@@ -38,7 +45,7 @@ const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n));
  * moved with the keyboard, or skipped by clicking a side. Pulling it far
  * enough to one side "commits" that side and calls onSelect.
  */
-export function SplitScreenSlider({ left, right, selected, onSelect, commitAt = 0.8 }: Props) {
+export function SplitScreenSlider({ left, right, selected, onSelect, commitAt = 0.8, labels = DEFAULT_LABELS }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ startX: number; moved: boolean } | null>(null);
 
@@ -138,7 +145,7 @@ export function SplitScreenSlider({ left, right, selected, onSelect, commitAt = 
     selected !== pane && (
       <button
         type="button"
-        aria-label={`Open ${config.label}`}
+        aria-label={labels.open(config.label)}
         className="absolute inset-0 z-10 cursor-pointer focus-visible:outline-none"
         onClick={() => onSelect(pane)}
         onMouseEnter={() => setHover(pane)}
@@ -150,6 +157,8 @@ export function SplitScreenSlider({ left, right, selected, onSelect, commitAt = 
   return (
     <div
       ref={containerRef}
+      // The geometry is physical (left pane / right pane) in every language.
+      dir="ltr"
       className="relative h-svh w-full select-none overflow-hidden bg-black"
       data-dragging={dragging || undefined}
     >
@@ -192,7 +201,7 @@ export function SplitScreenSlider({ left, right, selected, onSelect, commitAt = 
       <div
         role="slider"
         tabIndex={0}
-        aria-label={`Drag to choose between ${left.label} and ${right.label}`}
+        aria-label={labels.slider(left.label, right.label)}
         aria-orientation="horizontal"
         aria-valuemin={0}
         aria-valuemax={100}
