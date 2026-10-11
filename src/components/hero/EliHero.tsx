@@ -9,7 +9,7 @@ export function EliBackground({ profile }: { profile: SideProfile }) {
   return (
     <div className="eli-wood absolute inset-0 overflow-hidden">
       {hero && <Image src={hero} alt="" fill priority sizes="100vw" className="object-cover opacity-35" />}
-      <div aria-hidden className="eli-grille absolute inset-x-[6%] bottom-[8%] top-[46%] rounded-[2.5rem] border-[10px] border-[#3b2414] shadow-[inset_0_0_60px_rgba(0,0,0,.6)]" />
+      <div aria-hidden className="eli-grille absolute inset-x-[6%] bottom-[8%] top-[56%] rounded-[2.5rem] border-[10px] border-[#3b2414] shadow-[inset_0_0_60px_rgba(0,0,0,.6)]" />
       <div aria-hidden className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,rgba(255,170,60,.18),transparent_60%)]" />
     </div>
   );
@@ -25,7 +25,7 @@ export function EliContent({ profile, share, lang }: { profile: SideProfile; sha
   return (
     <div
       dir={dirOf(lang)}
-      className="flex h-full flex-col items-center justify-start px-6 pt-[12vh] text-center text-[#f6e7c8]"
+      className="flex h-full flex-col items-center justify-center px-6 text-center text-[#f6e7c8]"
       style={{ opacity: visible ? 1 : 0, transition: "opacity 300ms ease" }}
     >
       <p className="font-mono text-[clamp(.6rem,1.8cqw,.875rem)] uppercase tracking-[0.4em] text-[#ffb347]/90">{d.eliKicker}</p>
