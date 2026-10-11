@@ -113,8 +113,8 @@ Design notes:
 ### Step 1: Run it locally with demo content
 
 ```bash
-git clone https://github.com/Kfir56/mom-and-dad-websites.git
-cd mom-and-dad-websites
+git clone https://github.com/Kfir56/mom_and_dad_website.git
+cd mom_and_dad_website
 npm install
 npm run dev
 ```
@@ -160,7 +160,7 @@ Public sign-up stays off: only the two accounts you create can log in.
 ### Step 5: Deploy
 
 1. Push this repo to GitHub (already done if you're reading this there).
-2. At https://vercel.com, **Add New → Project**, import `mom-and-dad-websites`, and add the two `NEXT_PUBLIC_SUPABASE_*` environment variables.
+2. At https://vercel.com, **Add New → Project**, import `mom_and_dad_website`, and add the two `NEXT_PUBLIC_SUPABASE_*` environment variables.
 3. Deploy. Then in Supabase **Authentication → URL Configuration**, set **Site URL** to your Vercel URL (or your custom domain once you add one).
 4. Bookmark `https://<your-site>/admin` on your parents' phones and computers.
 
