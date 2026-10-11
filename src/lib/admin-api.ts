@@ -131,12 +131,16 @@ export async function deleteCategory(id: string) {
   await publishChanges();
 }
 
-export async function saveProfile(side: Side, fields: Pick<SideProfile, "display_name" | "tagline" | "bio">, heroFile?: File | null, oldHero?: string | null) {
-  let hero_image = oldHero ?? null;
-  if (heroFile) {
-    hero_image = await uploadPhoto(side, "hero", heroFile);
-    if (oldHero) await removePhotos([oldHero]);
-  }
+/** Pass a new heroFile to replace the background photo, or removeHero to take it away. */
+export async function saveProfile(
+  side: Side,
+  fields: Pick<SideProfile, "display_name" | "tagline" | "bio">,
+  { heroFile, removeHero, oldHero }: { heroFile?: File | null; removeHero?: boolean; oldHero?: string | null } = {},
+) {
+  let hero_image = removeHero ? null : (oldHero ?? null);
+  if (heroFile) hero_image = await uploadPhoto(side, "hero", heroFile);
   check(await db().from("sides").update({ ...fields, hero_image }).eq("side", side));
+  // Only delete the old file once nothing points at it any more.
+  if (oldHero && hero_image !== oldHero) await removePhotos([oldHero]);
   await publishChanges();
 }
