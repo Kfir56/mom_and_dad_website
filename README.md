@@ -85,7 +85,7 @@ How it works:
 
 ## 4. Database schema
 
-Everything is in [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql).
+Everything is in [`supabase/migrations/`](supabase/migrations/): `0001_init.sql` creates it and `0002_security_hardening.sql` tightens the security rules.
 
 ```
 sides         side (PK: 'inbar' | 'eli'), display_name, tagline, bio, hero_image
@@ -124,8 +124,8 @@ Open http://localhost:3000. Until Supabase is connected the site shows sample ar
 ### Step 2: Create the Supabase project
 
 1. Sign up at https://supabase.com and create a new project (free plan). Pick the region closest to your parents' visitors.
-2. Open **SQL Editor → New query**, paste the whole of `supabase/migrations/0001_init.sql`, and click **Run**. This creates the tables, the security rules, the `portfolio` photo bucket and the starter categories.
-3. Open **Project Settings → API** and copy the **Project URL** and the **anon public** key.
+2. Open **SQL Editor → New query**, paste the whole of `supabase/migrations/0001_init.sql`, and click **Run**. Then do the same with `supabase/migrations/0002_security_hardening.sql`. Together they create the tables, the security rules, the `portfolio` photo bucket and the starter categories.
+3. Open **Project Settings → API Keys** and copy the **Project URL** and the **publishable** key (`sb_publishable_...`). The legacy anon key also works.
 4. In the project folder:
    ```bash
    cp .env.example .env.local
@@ -160,7 +160,7 @@ Public sign-up stays off: only the two accounts you create can log in.
 ### Step 5: Deploy
 
 1. Push this repo to GitHub (already done if you're reading this there).
-2. At https://vercel.com, **Add New → Project**, import `mom_and_dad_website`, and add the two `NEXT_PUBLIC_SUPABASE_*` environment variables.
+2. At https://vercel.com, **Add New → Project**, import `mom_and_dad_website`, and add the `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` environment variables.
 3. Deploy. Then in Supabase **Authentication → URL Configuration**, set **Site URL** to your Vercel URL (or your custom domain once you add one).
 4. Bookmark `https://<your-site>/admin` on your parents' phones and computers.
 
@@ -170,6 +170,15 @@ Public sign-up stays off: only the two accounts you create can log in.
 - **Password resets**: send a reset link from Supabase → Authentication → Users → ⋯ → Send password recovery.
 - **Hero background photos**: each parent can upload one under **About me**, and it shows behind their half of the split screen.
 - **Backups**: Supabase free projects pause after a week of no traffic. A visitor or an uptime pinger keeps it awake, and the Pro plan adds daily backups.
+
+---
+
+## Working on it with Claude Code
+
+The repo is set up for Claude Code:
+
+- `.claude/skills/` holds Supabase's official agent skills (`supabase` and `supabase-postgres-best-practices`), installed with `npx skills add supabase/agent-skills`. Run `npx skills update` to refresh them.
+- `.mcp.json` registers the Supabase MCP server for this project (ref `vnnnsmxgfggrzyrlqplo`). The first time you open the repo in Claude Code, approve the server and run `/mcp` to sign in to Supabase in the browser.
 
 ---
 
