@@ -24,7 +24,7 @@ export function ItemDialog({ ref, lang, side, item, ownerName, categoryName }: P
         </button>
       </form>
       {/* Keyed by item so the media viewer resets for each piece. */}
-      {item && <PieceDetails key={item.id} lang={lang} item={item} ownerName={ownerName} categoryName={categoryName} showPageLink />}
+      {item && <PieceDetails key={item.id} lang={lang} item={item} ownerName={ownerName} categoryName={categoryName} />}
     </dialog>
   );
 }
