@@ -15,6 +15,9 @@ What visitors get:
 - **A page for every piece** at `/he/piece/<id>` with Share, WhatsApp and Copy-link buttons. Links show the piece's photo and title in WhatsApp and Facebook previews.
 - **"Ask about this piece"** and a general contact form. Messages land in the parent's admin inbox. No email service is needed; they reply from their own email app.
 - **Exhibitions & news** under each gallery, with "Upcoming" on future dates.
+- **Search and sorting** in each gallery (search looks through names, materials, years and categories in both languages).
+- **Photo zoom** (tap a photo for a full-screen viewer; pinch or tap to zoom further).
+- **Like button** (one like per browser, no login) and **"More like this"** suggestions on each piece.
 
 This is a portfolio only, with no shop or payments.
 
@@ -104,7 +107,7 @@ How it works:
 
 ## 4. Database schema
 
-Everything is in [`supabase/migrations/`](supabase/migrations/): `0001_init.sql` creates it, `0002_security_hardening.sql` tightens the security rules, and `0003_bilingual_media_news.sql` adds Hebrew text, media, news, messages and reordering.
+Everything is in [`supabase/migrations/`](supabase/migrations/): `0001_init.sql` creates it, `0002_security_hardening.sql` tightens the security rules, `0003_bilingual_media_news.sql` adds Hebrew text, media, news, messages and reordering, and `0004_likes_and_stats.sql` adds likes and visitor counters.
 
 ```
 sides         side (PK: 'inbar' | 'eli'), display_name(_he), tagline(_he), bio(_he), hero_image
@@ -128,6 +131,7 @@ Design notes:
 - **`published`** lets a parent save a draft and show it later.
 - **Hebrew and English live side by side**: plain columns are English and `*_he` columns are Hebrew. If one is empty, the site shows the other, so a parent can fill in just one language.
 - **Messages are write-only for visitors.** Anyone can insert a message (with a limit of 20 per side per hour), but only the parent it was sent to can read it.
+- **Likes and stats** are counters on `items` (`view_count`, `like_count`, `share_count`) and `sides.visits`. Visitors can only change them through five narrow functions (`set_like`, `like_state`, `record_view`, `record_share`, `record_side_visit`); the `item_likes` table itself is closed to the public. The admin panel's **Stats** tab reads the totals.
 - **`reorder_items(ids)`** saves a new gallery order in one call, running as the signed-in parent so the security rules still apply.
 - **Security lives in the database.** Row Level Security policies let anyone *read* published items, and let a logged-in admin *write* only rows where `side` matches their own `admins.side`. The same rule applies to the storage bucket by folder name, so Inbar's account physically cannot edit Eli's radios and vice versa.
 

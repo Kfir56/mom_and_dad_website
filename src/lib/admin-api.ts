@@ -244,3 +244,58 @@ export async function setMessageRead(id: string, is_read: boolean) {
 export async function deleteMessage(id: string) {
   check(await db().from("messages").delete().eq("id", id));
 }
+
+// ---------------------------------------------------------------- duplicate
+
+/**
+ * Make a hidden copy of a piece, including its own copies of the stored files
+ * (so deleting one piece never breaks the other). Returns the new piece's id.
+ */
+export async function duplicateItem(side: Side, item: Item, copySuffix: { en: string; he: string }): Promise<string> {
+  const row = {
+    side,
+    category_id: item.category_id,
+    title: item.title ? `${item.title} ${copySuffix.en}` : "",
+    title_he: item.title_he ? `${item.title_he} ${copySuffix.he}` : "",
+    description: item.description,
+    description_he: item.description_he,
+    year: item.year,
+    materials: item.materials,
+    materials_he: item.materials_he,
+    manufacturer: item.manufacturer,
+    model: item.model,
+    process: item.process,
+    process_he: item.process_he,
+    video_url: item.video_url,
+    published: false,
+    sort_order: item.sort_order,
+  };
+  const copy = check(await db().from("items").insert(row).select().single()) as Item;
+
+  const copyFile = async (from: string | null) => {
+    if (!from) return null;
+    const ext = from.split(".").pop() || "bin";
+    const to = `${side}/${copy.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await db().storage.from(STORAGE_BUCKET).copy(from, to);
+    if (error) throw new Error(`Copy failed: ${error.message}`);
+    return to;
+  };
+
+  try {
+    const cover_path = await copyFile(item.cover_path);
+    const before_path = await copyFile(item.before_path);
+    const audio_path = await copyFile(item.audio_path);
+    check(await db().from("items").update({ cover_path, before_path, audio_path }).eq("id", copy.id));
+    const extras = [];
+    for (const p of item.item_photos) {
+      extras.push({ item_id: copy.id, path: await copyFile(p.path), caption: p.caption, kind: p.kind, sort_order: p.sort_order });
+    }
+    if (extras.length) check(await db().from("item_photos").insert(extras));
+  } catch (e) {
+    // Don't leave a half-copied piece behind.
+    await db().from("items").delete().eq("id", copy.id);
+    throw e;
+  }
+  await publishChanges();
+  return copy.id;
+}

@@ -15,6 +15,7 @@ export type SideProfile = {
   bio: string;
   bio_he: string;
   hero_image: string | null;
+  visits: number;
 };
 
 export type Category = {
@@ -58,6 +59,9 @@ export type Item = {
   published: boolean;
   sort_order: number;
   created_at: string;
+  view_count: number;
+  like_count: number;
+  share_count: number;
   item_photos: ItemPhoto[];
 };
 

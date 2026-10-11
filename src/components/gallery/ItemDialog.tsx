@@ -5,10 +5,10 @@ import { t } from "@/lib/i18n";
 import type { Item, Lang, Side } from "@/lib/types";
 import { PieceDetails } from "@/components/piece/PieceDetails";
 
-type Props = { ref: Ref<HTMLDialogElement>; lang: Lang; side: Side; item: Item | null; ownerName: string; categoryName?: string };
+type Props = { ref: Ref<HTMLDialogElement>; lang: Lang; side: Side; item: Item | null; ownerName: string; categoryName?: string; related?: Item[]; onPickRelated?: (item: Item) => void };
 
 /** Pop-up with full details for one piece. */
-export function ItemDialog({ ref, lang, side, item, ownerName, categoryName }: Props) {
+export function ItemDialog({ ref, lang, side, item, ownerName, categoryName, related, onPickRelated }: Props) {
   return (
     <dialog
       ref={ref}
@@ -24,7 +24,7 @@ export function ItemDialog({ ref, lang, side, item, ownerName, categoryName }: P
         </button>
       </form>
       {/* Keyed by item so the media viewer resets for each piece. */}
-      {item && <PieceDetails key={item.id} lang={lang} item={item} ownerName={ownerName} categoryName={categoryName} />}
+      {item && <PieceDetails key={item.id} lang={lang} item={item} ownerName={ownerName} categoryName={categoryName} related={related} onPickRelated={onPickRelated} />}
     </dialog>
   );
 }

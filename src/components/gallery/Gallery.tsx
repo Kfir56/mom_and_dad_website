@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { pick, t } from "@/lib/i18n";
+import { matchesQuery, relatedItems, sortItems, type SortKey } from "@/lib/gallery-tools";
 import type { Category, Item, Lang, Side } from "@/lib/types";
 import { coverOf, ItemImage } from "./ItemImage";
 import { ItemDialog } from "./ItemDialog";
@@ -11,6 +12,8 @@ type Props = { lang: Lang; side: Side; ownerName: string; categories: Category[]
 export function Gallery({ lang, side, ownerName, categories, items }: Props) {
   const d = t(lang);
   const [filter, setFilter] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortKey>("featured");
   const [openItem, setOpenItem] = useState<Item | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -23,7 +26,23 @@ export function Gallery({ lang, side, ownerName, categories, items }: Props) {
     const c = categories.find((c) => c.id === id);
     return c ? pick(lang, c.name, c.name_he) : undefined;
   };
-  const shown = filter ? items.filter((i) => i.category_id === filter) : items;
+  const shown = useMemo(
+    () =>
+      sortItems(
+        items.filter((i) => (!filter || i.category_id === filter) && matchesQuery(i, categories, query)),
+        sort,
+        lang,
+      ),
+    [items, categories, filter, query, sort, lang],
+  );
+  const sortNames: Record<SortKey, string> = {
+    featured: d.sortFeatured,
+    newest: d.sortNewest,
+    oldest: d.sortOldest,
+    year: d.sortYear,
+    az: d.sortAz,
+  };
+  const field = "rounded-full border border-[var(--side-border)] bg-[var(--side-card)] px-4 py-2 text-sm text-[var(--side-fg)] outline-none focus:border-[var(--side-accent)]";
 
   const open = (item: Item) => {
     setOpenItem(item);
@@ -39,6 +58,34 @@ export function Gallery({ lang, side, ownerName, categories, items }: Props) {
 
   return (
     <>
+      {items.length > 1 && (
+        <div className="mx-auto mb-6 flex max-w-2xl flex-wrap items-center justify-center gap-3">
+          <div className="relative min-w-0 flex-1 basis-56">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={d.searchPlaceholder}
+              aria-label={d.searchLabel}
+              className={`${field} w-full pe-10`}
+            />
+            {query && (
+              <button type="button" aria-label={d.clearSearch} onClick={() => setQuery("")} className="absolute end-3 top-1/2 -translate-y-1/2 text-lg leading-none text-[var(--side-muted)] hover:text-[var(--side-fg)]">
+                ×
+              </button>
+            )}
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--side-muted)]">
+            {d.sortLabel}
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} className={field}>
+              {(Object.keys(sortNames) as SortKey[]).map((k) => (
+                <option key={k} value={k}>{sortNames[k]}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+
       {usedCategories.length > 1 && (
         <div role="toolbar" aria-label={d.filterLabel} className="mb-8 flex flex-wrap justify-center gap-2">
           {[{ id: null, name: d.all, name_he: d.all }, ...usedCategories].map((c) => {
@@ -61,6 +108,8 @@ export function Gallery({ lang, side, ownerName, categories, items }: Props) {
           })}
         </div>
       )}
+
+      {shown.length === 0 && <p className="py-12 text-center text-[var(--side-muted)]">{d.noResults}</p>}
 
       <ul className="columns-1 gap-6 sm:columns-2 lg:columns-3">
         {shown.map((item, idx) => {
@@ -114,7 +163,17 @@ export function Gallery({ lang, side, ownerName, categories, items }: Props) {
         })}
       </ul>
 
-      <ItemDialog ref={dialogRef} lang={lang} side={side} ownerName={ownerName} item={openItem} categoryName={categoryName(openItem?.category_id ?? null)} />
+      <ItemDialog
+        ref={dialogRef}
+        lang={lang}
+        side={side}
+        ownerName={ownerName}
+        item={openItem}
+        related={openItem ? relatedItems(openItem, items) : []}
+        onPickRelated={(i) => {
+          setOpenItem(i);
+          dialogRef.current?.scrollTo({ top: 0 });
+        }} categoryName={categoryName(openItem?.category_id ?? null)} />
     </>
   );
 }

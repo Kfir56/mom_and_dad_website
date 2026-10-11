@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { pick, t } from "@/lib/i18n";
+import { recordSideVisit } from "@/lib/visitor";
 import type { Lang, Portfolio, Side } from "@/lib/types";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { SplitScreenSlider, type Pane } from "./hero/SplitScreenSlider";
@@ -26,6 +27,7 @@ export function HomeExperience({ lang, portfolio }: { lang: Lang; portfolio: Por
     const openFromHash = () => {
       const fromHash = window.location.hash.slice(1);
       if (fromHash !== "inbar" && fromHash !== "eli") return;
+      recordSideVisit(fromHash);
       frame = requestAnimationFrame(() => {
         setSelected(SIDE_TO_PANE[fromHash]);
         requestAnimationFrame(() => sectionRef.current?.scrollIntoView());
@@ -41,6 +43,7 @@ export function HomeExperience({ lang, portfolio }: { lang: Lang; portfolio: Por
 
   const select = (pane: Pane | null) => {
     setSelected(pane);
+    if (pane) recordSideVisit(PANE_TO_SIDE[pane]);
     // Keep the address shareable and make the back link land on the same side.
     history.replaceState(null, "", pane ? `#${PANE_TO_SIDE[pane]}` : window.location.pathname);
   };

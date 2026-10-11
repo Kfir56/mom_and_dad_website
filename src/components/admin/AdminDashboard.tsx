@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { deleteItem, loadSide, reorderItems, type AdminData } from "@/lib/admin-api";
+import { deleteItem, duplicateItem, loadSide, reorderItems, type AdminData } from "@/lib/admin-api";
 import { pick } from "@/lib/i18n";
 import { getBrowserClient } from "@/lib/supabase";
 import type { Item, Side } from "@/lib/types";
@@ -14,8 +14,9 @@ import { CategoryManager } from "./CategoryManager";
 import { ProfileEditor } from "./ProfileEditor";
 import { NewsManager } from "./NewsManager";
 import { MessagesInbox } from "./MessagesInbox";
+import { StatsPanel } from "./StatsPanel";
 
-type Tab = "pieces" | "categories" | "news" | "messages" | "about";
+type Tab = "pieces" | "categories" | "news" | "messages" | "stats" | "about";
 
 export function AdminDashboard({ side, email }: { side: Side; email: string }) {
   const { lang, a } = useAdminLang();
@@ -25,6 +26,7 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
   const [tab, setTab] = useState<Tab>("pieces");
   const [editing, setEditing] = useState<Item | "new" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [copying, setCopying] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const orderBeforeDrag = useRef<Item[] | null>(null);
 
@@ -61,6 +63,22 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
       await reload();
     } catch (e) {
       setError((e as Error).message);
+    }
+  };
+
+  const duplicate = async (item: Item) => {
+    setCopying(item.id);
+    try {
+      const id = await duplicateItem(side, item, { en: a.copySuffix, he: a.copySuffixHe });
+      const fresh = await loadSide(side);
+      setData(fresh);
+      flash(a.duplicated(titleOf(item)));
+      // Open the copy so it can be edited right away.
+      setEditing(fresh.items.find((i) => i.id === id) ?? null);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setCopying(null);
     }
   };
 
@@ -104,6 +122,7 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
     ["pieces", a.tabPieces(L.pieces)],
     ["messages", a.tabMessages],
     ["news", a.tabNews],
+    ["stats", a.tabStats],
     ["categories", a.tabCategories],
     ["about", a.tabAbout],
   ];
@@ -209,7 +228,7 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
                     <div className="p-4">
                       <p className="text-sm text-stone-500">{categoryName(item.category_id) ?? a.noCategory}</p>
                       <h2 className="text-lg font-semibold">{titleOf(item)}</h2>
-                      <div className="mt-3 flex gap-2">
+                      <div className="mt-3 flex flex-wrap gap-2">
                         <button
                           onClick={() => move(index, -1)}
                           disabled={index === 0}
@@ -230,6 +249,13 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
                         </button>
                         <button onClick={() => setEditing(item)} className="flex-1 rounded-xl bg-stone-900 py-2 font-medium text-white hover:bg-stone-700">
                           {a.edit}
+                        </button>
+                        <button
+                          onClick={() => duplicate(item)}
+                          disabled={copying !== null}
+                          className="rounded-xl bg-stone-100 px-3 py-2 font-medium hover:bg-stone-200 disabled:opacity-50"
+                        >
+                          {copying === item.id ? a.duplicating : a.duplicate}
                         </button>
                         <button onClick={() => remove(item)} className="rounded-xl border-2 border-red-200 px-3 py-2 font-medium text-red-700 hover:bg-red-50">
                           {a.delete}
@@ -253,6 +279,8 @@ export function AdminDashboard({ side, email }: { side: Side; email: string }) {
             }}
             onError={setError}
           />
+        ) : tab === "stats" ? (
+          <StatsPanel data={data} />
         ) : tab === "messages" ? (
           <MessagesInbox messages={data.messages} items={data.items} onChange={reload} onError={setError} />
         ) : (

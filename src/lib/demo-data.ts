@@ -15,6 +15,9 @@ const base = {
   before_path: null,
   audio_path: null,
   video_url: null,
+  view_count: 0,
+  like_count: 0,
+  share_count: 0,
   published: true,
   sort_order: 0,
   created_at: "2026-01-01T00:00:00Z",
@@ -43,6 +46,7 @@ export const demoPortfolio: Portfolio = {
       bio: "Painting, wood burning, water art, woodworking, sculpting and every kind of brush in between. Each piece starts with a material and a question: what does it want to become?",
       bio_he: "ציור, צריבה בעץ, אמנות מים, עבודות עץ, פיסול וכל סוג של מכחול שביניהם. כל יצירה מתחילה בחומר ובשאלה: מה הוא רוצה להיות?",
       hero_image: null,
+      visits: 0,
     },
     categories: [
       c("c-paint", "inbar", "Painting", "ציור", 1),
@@ -73,6 +77,7 @@ export const demoPortfolio: Portfolio = {
       bio: "Restoring tube and transistor radios from the 1950s and 1960s: new capacitors, re-strung dials, polished Bakelite, and that warm sound coming back out of the speaker.",
       bio_he: "משחזר מקלטי רדיו עם מנורות וטרנזיסטורים משנות ה־50 וה־60: קבלים חדשים, חוטי כיוון מתוחים מחדש, בקליט מבריק, והצליל החם שחוזר לצאת מהרמקול.",
       hero_image: null,
+      visits: 0,
     },
     categories: [
       c("c-tube", "eli", "Tube radios", "רדיו מנורות", 1),

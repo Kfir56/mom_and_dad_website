@@ -1,13 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { pick, t } from "@/lib/i18n";
 import { photoUrl } from "@/lib/supabase";
 import { embedUrl } from "@/lib/video";
+import { recordShare, recordView } from "@/lib/visitor";
 import type { Item, Lang, MediaKind } from "@/lib/types";
 import { ItemImage } from "@/components/gallery/ItemImage";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { ContactForm } from "./ContactForm";
+import { LikeButton } from "./LikeButton";
+import { PhotoZoom } from "./PhotoZoom";
+import { RelatedPieces } from "./RelatedPieces";
 import { RadioSoundPlayer } from "./RadioSoundPlayer";
 import { ShareButtons } from "./ShareButtons";
 
@@ -16,12 +20,16 @@ type Props = {
   item: Item;
   ownerName: string;
   categoryName?: string;
+  /** Other pieces to suggest at the bottom. */
+  related?: Item[];
+  /** In the gallery pop-up, picking a related piece swaps the open one instead of navigating. */
+  onPickRelated?: (item: Item) => void;
 };
 
 type Media = { id: string; path: string; caption: string; kind: MediaKind };
 
 /** Everything about one piece: photos, videos, before/after, sound, details, share and contact. */
-export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
+export function PieceDetails({ lang, item, ownerName, categoryName, related = [], onPickRelated }: Props) {
   const d = t(lang);
   const side = item.side;
   const title = pick(lang, item.title, item.title_he);
@@ -39,6 +47,11 @@ export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
   // The first view is the before/after comparison when there is one.
   const [view, setView] = useState<"compare" | number>(before && after ? "compare" : 0);
   const current = typeof view === "number" ? media[view] : null;
+  const [zoomed, setZoomed] = useState(false);
+  const currentSrc = photoUrl(current?.path);
+
+  // Count one view per visit for the owner's stats.
+  useEffect(() => recordView(item.id), [item.id]);
 
   const facts: [string, string | number | null][] =
     side === "inbar"
@@ -58,6 +71,7 @@ export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
 
   const thumb = "relative h-16 w-20 shrink-0 overflow-hidden rounded-md border-2";
   return (
+    <>
     <div className="grid md:grid-cols-[3fr_2fr]">
       <div className="bg-black/20">
         {view === "compare" && before && after ? (
@@ -67,6 +81,18 @@ export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
         ) : (
           <div className="relative aspect-[4/3]">
             <ItemImage path={current?.path ?? null} alt={title} side={side} seed={item.id} sizes="(min-width:768px) 60vw, 94vw" className="!object-contain" />
+            {currentSrc && (
+              <button
+                type="button"
+                aria-label={d.zoomPhoto}
+                onClick={() => setZoomed(true)}
+                className="group absolute inset-0 cursor-zoom-in focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-[var(--side-accent)]"
+              >
+                <span aria-hidden className="absolute bottom-3 end-3 flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur transition group-hover:scale-110">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.500-3.500M11 8v6M8 11h6" /></svg>
+                </span>
+              </button>
+            )}
           </div>
         )}
         {current?.caption && <p className="px-4 pt-2 text-sm text-[var(--side-muted)]">{current.caption}</p>}
@@ -140,9 +166,15 @@ export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
           </div>
         )}
 
-        <ShareButtons lang={lang} path={pagePath} title={title} />
+        <div className="flex flex-wrap items-center gap-2">
+          <LikeButton lang={lang} itemId={item.id} />
+        </div>
+        <ShareButtons lang={lang} path={pagePath} title={title} onShare={() => recordShare(item.id)} />
         <ContactForm lang={lang} side={side} itemId={item.id} ownerName={ownerName} title={d.ask} />
       </div>
     </div>
+    <RelatedPieces lang={lang} items={related} onPick={onPickRelated} />
+    {zoomed && currentSrc && <PhotoZoom lang={lang} src={currentSrc} alt={title} onClose={() => setZoomed(false)} />}
+    </>
   );
 }

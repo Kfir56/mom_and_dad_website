@@ -5,6 +5,7 @@ import { LanguageSwitch } from "@/components/LanguageSwitch";
 import { PieceDetails } from "@/components/piece/PieceDetails";
 import { coverOf } from "@/components/gallery/ItemImage";
 import { isLang, pick, t } from "@/lib/i18n";
+import { relatedItems } from "@/lib/gallery-tools";
 import { getItem, getPortfolio } from "@/lib/portfolio";
 import { photoUrl } from "@/lib/supabase";
 import type { Lang } from "@/lib/types";
@@ -78,7 +79,7 @@ async function Piece({ params }: Pick<PageProps<"/[lang]/piece/[id]">, "params">
           <LanguageSwitch lang={lang} />
         </nav>
         <article className={`overflow-hidden bg-[var(--side-card)]/40 ${item.side === "inbar" ? "rounded-3xl" : "rounded-md border border-[var(--side-border)]"}`}>
-          <PieceDetails lang={lang} item={item} ownerName={name} categoryName={category ? pick(lang, category.name, category.name_he) : undefined} />
+          <PieceDetails lang={lang} item={item} ownerName={name} categoryName={category ? pick(lang, category.name, category.name_he) : undefined} related={relatedItems(item, side.items)} />
         </article>
       </div>
     </main>
