@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { pick, t } from "@/lib/i18n";
 import { photoUrl } from "@/lib/supabase";
@@ -9,6 +8,7 @@ import type { Item, Lang, MediaKind } from "@/lib/types";
 import { ItemImage } from "@/components/gallery/ItemImage";
 import { BeforeAfterSlider } from "./BeforeAfterSlider";
 import { ContactForm } from "./ContactForm";
+import { RadioSoundPlayer } from "./RadioSoundPlayer";
 import { ShareButtons } from "./ShareButtons";
 
 type Props = {
@@ -16,14 +16,12 @@ type Props = {
   item: Item;
   ownerName: string;
   categoryName?: string;
-  /** In the gallery pop-up, link to the piece's own page. */
-  showPageLink?: boolean;
 };
 
 type Media = { id: string; path: string; caption: string; kind: MediaKind };
 
 /** Everything about one piece: photos, videos, before/after, sound, details, share and contact. */
-export function PieceDetails({ lang, item, ownerName, categoryName, showPageLink }: Props) {
+export function PieceDetails({ lang, item, ownerName, categoryName }: Props) {
   const d = t(lang);
   const side = item.side;
   const title = pick(lang, item.title, item.title_he);
@@ -129,12 +127,7 @@ export function PieceDetails({ lang, item, ownerName, categoryName, showPageLink
             ))}
         </dl>
 
-        {audio && (
-          <div>
-            <p className={`mb-1 text-sm font-semibold ${side === "eli" ? "font-mono uppercase" : ""}`}>♪ {d.listen}</p>
-            <audio src={audio} controls preload="none" className="w-full" />
-          </div>
-        )}
+        {audio && <RadioSoundPlayer lang={lang} src={audio} />}
 
         {description && <p className="whitespace-pre-line leading-relaxed">{description}</p>}
 
@@ -148,11 +141,6 @@ export function PieceDetails({ lang, item, ownerName, categoryName, showPageLink
         )}
 
         <ShareButtons lang={lang} path={pagePath} title={title} />
-        {showPageLink && (
-          <Link href={pagePath} className="block w-fit text-sm underline underline-offset-4">
-            {d.viewPage}
-          </Link>
-        )}
         <ContactForm lang={lang} side={side} itemId={item.id} ownerName={ownerName} title={d.ask} />
       </div>
     </div>

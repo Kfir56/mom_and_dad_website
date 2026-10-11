@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { Lang, SideProfile } from "@/lib/types";
 import { dirOf, pick, t } from "@/lib/i18n";
+import { RadioHeroButton } from "./RadioHeroButton";
 import { photoUrl } from "@/lib/supabase";
 
 /** Dad's side: walnut cabinet, grille cloth, a glowing tuning dial. */
@@ -52,6 +53,7 @@ export function EliContent({ profile, share, lang }: { profile: SideProfile; sha
           style={{ left: `${needle}%`, transition: "left 250ms ease-out" }}
         />
       </div>
+      {visible && <RadioHeroButton lang={lang} />}
       <p className="mt-6 font-mono text-xs uppercase tracking-widest text-[#f6e7c8]/70" style={{ opacity: share > 0.55 && share < 0.98 ? 1 : 0 }}>
         {d.eliHint}
       </p>
